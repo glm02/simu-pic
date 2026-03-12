@@ -240,7 +240,7 @@ function App() {
   };
 
   return (
-    <div className={`flex flex-col h-screen font-sans overflow-hidden select-none animate-hardware-boot transition-colors duration-1000 ${
+    <div className={`flex flex-col h-screen font-sans overflow-hidden select-none animate-hardware-boot transition-colors duration-1000 fixed inset-0 ${
       theme === 'neon' ? 'bg-[#050505] text-slate-300' : 
       theme === 'retro' ? 'bg-[#1a1a00] text-[#8fbc8f]' : 
       'bg-slate-900 text-slate-100'
@@ -348,24 +348,26 @@ function App() {
         </div>
 
         {/* Right: Board Area */}
-        <div className={`flex flex-col bg-[#050505] overflow-hidden relative transition-all duration-700 ${isBoardFullscreen ? 'flex-1' : 'w-[48%]'}`}>
+        <div className={`flex flex-col bg-[#050505] overflow-hidden relative transition-all duration-700 ${isBoardFullscreen ? 'flex-1' : 'w-[48%] min-w-0'}`}>
           {!isBoardFullscreen && (
             <div className="px-4 py-2 bg-white/5 border-b border-white/5 text-[9px] text-white/30 font-black uppercase tracking-[0.2em] flex justify-between items-center shrink-0">
                <span>🔌 Platine Laboratoire — GEII Lyon 1</span>
                <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                   <span>System_Active</span>
                </div>
             </div>
           )}
 
-          <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[radial-gradient(circle_at_center,_#0a1a0f_0%,_#050505_100%)]">
-             <Platine 
-                state={state} 
-                onInputChange={handleInputChange} 
-                ledColor={ledColor} 
-                fullscreen={isBoardFullscreen} 
-             />
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 xl:p-4 flex items-start justify-center bg-[radial-gradient(circle_at_center,_#0a1a0f_0%,_#050505_100%)]">
+             <div className="w-full flex justify-center py-4">
+               <Platine 
+                  state={state} 
+                  onInputChange={handleInputChange} 
+                  ledColor={ledColor} 
+                  fullscreen={isBoardFullscreen} 
+               />
+             </div>
           </div>
           
           <div className="absolute top-6 left-6 z-50">

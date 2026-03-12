@@ -10,45 +10,59 @@ const Screw = () => (
   </div>
 );
 
-const LCDScreen = ({ line1 = "", line2 = "", fullscreen = false }) => (
-  <div className="flex flex-col items-center">
-    <div className={`bg-[#1a1a1a] p-2 rounded-lg shadow-2xl border border-white/10 relative overflow-hidden transition-all duration-500 ${fullscreen ? 'scale-125 my-4' : 'scale-100'}`}>
-      <div className={`bg-[#8fbc8f] p-4 min-w-[280px] rounded shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] ${fullscreen ? 'min-w-[400px]' : ''}`}>
-        <div className={`font-mono text-[#0a1a00] tracking-[0.2em] font-black uppercase ${fullscreen ? 'text-3xl' : 'text-xl'}`}>
-          {line1.padEnd(16, ' ').substring(0, 16)}
-        </div>
-        <div className={`font-mono text-[#0a1a00] tracking-[0.2em] font-black uppercase mt-1 ${fullscreen ? 'text-3xl' : 'text-xl'}`}>
-          {line2.padEnd(16, ' ').substring(0, 16)}
+const LCDScreen = ({ line1 = "", line2 = "", fullscreen = false }) => {
+  const defaultLine1 = "SIMU-PIC v2.5";
+  const defaultLine2 = "GEII - LYON 1";
+  
+  const display1 = (line1 && line1.trim()) ? line1 : defaultLine1;
+  const display2 = (line2 && line2.trim()) ? line2 : defaultLine2;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`bg-[#0a0a0a] p-2 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden transition-all duration-500 ${fullscreen ? 'scale-110 my-4' : 'scale-100'}`}>
+        <div className={`bg-[#1a1a1a] p-4 min-w-[280px] rounded border border-white/5 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] ${fullscreen ? 'min-w-[400px]' : ''}`}>
+          <div className={`font-mono text-[#00ff41] tracking-[0.2em] font-black uppercase drop-shadow-[0_0_5px_rgba(0,255,65,0.8)] ${fullscreen ? 'text-2xl' : 'text-sm'}`}>
+            {display1.substring(0, 16)}
+          </div>
+          <div className={`font-mono text-[#00ff41] tracking-[0.2em] font-black uppercase mt-1 drop-shadow-[0_0_5px_rgba(0,255,65,0.8)] ${fullscreen ? 'text-2xl' : 'text-sm'}`}>
+            {display2.substring(0, 16)}
+          </div>
         </div>
       </div>
+      <span className={`text-white/30 font-mono mt-2 tracking-widest ${fullscreen ? 'text-xs' : 'text-[10px]'}`}>PERIPH: LCD_HD44780_GREEN_NIGHT</span>
     </div>
-    <span className={`text-white/30 font-mono mt-2 tracking-widest ${fullscreen ? 'text-xs' : 'text-[10px]'}`}>PERIPH: LCD_DRIVER_4BIT_HQ</span>
-  </div>
-);
+  );
+};
 
 const TactileButton = ({ label, bitIndex, isPressed, onDown, onUp, fullscreen = false }) => (
   <div className="flex flex-col items-center">
     <div 
       onMouseDown={() => onDown(bitIndex)} onMouseUp={() => onUp(bitIndex)} onMouseLeave={() => isPressed && onUp(bitIndex)}
       className={`rounded-xl flex items-center justify-center border-2 transition-all cursor-pointer ${
-        fullscreen ? 'w-16 h-16' : 'w-10 h-10 sm:w-12 sm:h-12'
+        fullscreen ? 'w-12 h-12' : 'w-9 h-9 sm:w-10 sm:h-10'
       } ${isPressed ? 'bg-indigo-500 border-white scale-95 shadow-inner' : 'bg-[#333] border-white/20 hover:border-white/40 shadow-lg'}`}
     >
-      <div className={`rounded-full border border-black/20 ${fullscreen ? 'w-8 h-8' : 'w-5 h-5 sm:w-6 sm:h-6'} ${isPressed ? 'bg-indigo-300' : 'bg-[#444]'}`}></div>
+      <div className={`rounded-full border border-black/20 ${fullscreen ? 'w-6 h-6' : 'w-4 h-4'} ${isPressed ? 'bg-indigo-300' : 'bg-[#444]'}`}></div>
     </div>
-    <span className={`font-mono mt-2 font-bold ${fullscreen ? 'text-xs' : 'text-[9px] sm:text-[10px]'} ${isPressed ? 'text-indigo-400' : 'text-white/60'}`}>{label}</span>
+    <span className={`font-mono mt-1 font-bold ${fullscreen ? 'text-[10px]' : 'text-[8px]'} ${isPressed ? 'text-indigo-400' : 'text-white/60'}`}>{label}</span>
   </div>
 );
 
 const DipSwitch = ({ portValue, onToggle, fullscreen = false }) => (
-  <div className={`bg-[#b30000] p-3 rounded-lg flex space-x-1 border-2 border-black/50 shadow-2xl transition-all ${fullscreen ? 'scale-125 mx-6' : 'scale-100 sm:scale-110'}`}>
+  <div className={`bg-[#b30000] p-3 rounded-lg flex flex-wrap justify-center border-2 border-black/50 shadow-2xl transition-all gap-1 ${fullscreen ? 'scale-110' : 'scale-90 sm:scale-100'}`}>
     {[7, 6, 5, 4, 3, 2, 1, 0].map((bit) => {
       const isOn = (portValue & (1 << bit)) !== 0;
       return (
         <div key={bit} className="flex flex-col items-center" onClick={() => onToggle(bit)}>
-          <span className="text-[9px] text-white font-bold mb-1">{bit}</span>
-          <div className="w-5 h-12 bg-black rounded p-0.5 cursor-pointer">
-            <div className={`w-full h-5 bg-white rounded-sm transition-all ${isOn ? 'mt-0' : 'mt-6'}`}></div>
+          <span className="text-[8px] text-white/80 font-black mb-1">{bit}</span>
+          <div className="w-8 h-12 bg-black/40 rounded p-1 cursor-pointer border border-black/50">
+            <div className={`w-full h-5 rounded-sm transition-all flex items-center justify-center text-[8px] font-black ${
+              isOn 
+              ? 'mt-0 bg-white border-white text-red-700 shadow-[0_0_10px_white]' 
+              : 'mt-5 bg-white/10 border-white/30 text-white opacity-40'
+            }`}>
+               {isOn ? 'ON' : 'OFF'}
+            </div>
           </div>
         </div>
       );
@@ -67,7 +81,7 @@ const LED = ({ label, isOn, color = 'green', fullscreen = false }) => {
     <div className="flex flex-col items-center">
       <div className={`rounded-full border border-white/5 transition-all duration-300 ${
         fullscreen ? 'w-6 h-6' : 'w-3 h-3 sm:w-4 sm:h-4'
-      } ${isOn ? colors[color] + ' animate-pulse' : 'bg-[#1a1a1a]'}`}></div>
+      } ${isOn ? colors[color] : 'bg-[#1a1a1a]'}`}></div>
       {label && <span className={`font-black mt-1 ${fullscreen ? 'text-[8px]' : 'text-[6px]'} ${isOn ? 'text-white/80' : 'text-white/10'}`}>{label}</span>}
     </div>
   );
@@ -75,21 +89,25 @@ const LED = ({ label, isOn, color = 'green', fullscreen = false }) => {
 
 const SevenSegment = ({ value, label, fullscreen = false }) => {
   const s = [(value&1)!=0, (value&2)!=0, (value&4)!=0, (value&8)!=0, (value&16)!=0, (value&32)!=0, (value&64)!=0, (value&128)!=0];
+  const onColor = "#ff3333";
+  const offColor = "#1a1a2e";
+  const glow = "shadow-[0_0_15px_rgba(255,51,51,0.8)]";
+
   return (
     <div className="flex flex-col items-center">
-      <div className={`bg-black p-4 rounded-xl border border-white/10 shadow-3xl transition-all ${fullscreen ? 'scale-125' : 'scale-100'}`}>
-        <svg viewBox="0 0 100 150" className={`${fullscreen ? 'w-16 h-24' : 'w-12 h-18'}`}>
-          <polygon points="20,10 80,10 75,20 25,20" fill={s[0] ? "#f00" : "#100"} />
-          <polygon points="85,15 85,70 75,65 75,25" fill={s[1] ? "#f00" : "#100"} />
-          <polygon points="85,80 85,135 75,125 75,85" fill={s[2] ? "#f00" : "#100"} />
-          <polygon points="20,140 80,140 75,130 25,130" fill={s[3] ? "#f00" : "#100"} />
-          <polygon points="15,80 15,135 25,125 25,85" fill={s[4] ? "#f00" : "#100"} />
-          <polygon points="15,15 15,70 25,65 25,25" fill={s[5] ? "#f00" : "#100"} />
-          <polygon points="20,75 75,75 70,85 25,85" fill={s[6] ? "#f00" : "#100"} />
-          <circle cx="90" cy="140" r="5" fill={s[7] ? "#f00" : "#100"} />
+      <div className={`bg-[#0a0a0a] p-4 rounded-xl border border-white/10 shadow-3xl transition-all ${fullscreen ? 'scale-110' : 'scale-90'}`}>
+        <svg viewBox="0 0 100 150" className={`${fullscreen ? 'w-20 h-32' : 'w-16 h-24'}`}>
+          <polygon points="20,10 80,10 75,20 25,20" fill={s[0] ? onColor : offColor} className={s[0] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="85,15 85,70 75,65 75,25" fill={s[1] ? onColor : offColor} className={s[1] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="85,80 85,135 75,125 75,85" fill={s[2] ? onColor : offColor} className={s[2] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="20,140 80,140 75,130 25,130" fill={s[3] ? onColor : offColor} className={s[3] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="15,80 15,135 25,125 25,85" fill={s[4] ? onColor : offColor} className={s[4] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="15,15 15,70 25,65 25,25" fill={s[5] ? onColor : offColor} className={s[5] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <polygon points="20,75 75,75 70,85 25,85" fill={s[6] ? onColor : offColor} className={s[6] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
+          <circle cx="90" cy="140" r="5" fill={s[7] ? onColor : offColor} className={s[7] ? "drop-shadow-[0_0_8px_rgba(255,51,51,0.9)]" : "opacity-20"} />
         </svg>
       </div>
-      <span className={`text-white/40 mt-2 font-mono uppercase ${fullscreen ? 'text-[10px]' : 'text-[9px]'}`}>{label}</span>
+      <span className={`text-white/40 mt-2 font-mono uppercase font-black ${fullscreen ? 'text-xs' : 'text-[10px]'}`}>{label}</span>
     </div>
   );
 };
@@ -118,10 +136,10 @@ const Platine = ({ state, onInputChange, ledColor = 'red', fullscreen = false })
         <div className="absolute bottom-6 left-6"><Screw /></div>
         <div className="absolute bottom-6 right-6"><Screw /></div>
 
-        <div className="flex flex-col space-y-2 relative z-10 pt-1">
+        <div className={`flex flex-col relative z-10 ${fullscreen ? 'pt-4' : 'pt-2'}`}>
           
           {/* 1. TOP ZONE: Header & Indicators */}
-          <div className="flex justify-between items-center border-b border-white/10 pb-2">
+          <div className={`flex justify-between items-center border-b border-white/10 ${fullscreen ? 'pb-4' : 'pb-2'}`}>
             <div className="flex items-center space-x-2">
                <div className="bg-yellow-500/10 p-1.5 rounded-lg border border-yellow-500/20">
                   <ShieldCheck className="text-yellow-500" size={14} />
@@ -158,28 +176,26 @@ const Platine = ({ state, onInputChange, ledColor = 'red', fullscreen = false })
         </div>
 
         {/* 3. DISPLAY & INPUTS MIX */}
-        <div className={`grid grid-cols-1 lg:grid-cols-2 ${fullscreen ? 'gap-8 my-6' : 'gap-2'}`}>
-           <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex items-center justify-center min-h-[80px]">
+        <div className={`grid grid-cols-1 lg:grid-cols-2 ${fullscreen ? 'gap-8 my-6' : 'gap-3'}`}>
+           <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex items-center justify-center min-h-[100px]">
               <LCDScreen line1={state.LCD_LINE1} line2={state.LCD_LINE2} fullscreen={fullscreen} />
            </div>
-           <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex justify-around items-center">
+           <div className={`bg-black/30 p-4 rounded-lg border border-white/5 flex justify-center items-center ${fullscreen ? 'gap-12' : 'gap-6'}`}>
               <SevenSegment value={state.PORTC} label="SEG_A" fullscreen={fullscreen} />
               <SevenSegment value={state.PORTE} label="SEG_B" fullscreen={fullscreen} />
            </div>
         </div>
 
         {/* 4. INPUT ZONE */}
-        <div className={`flex flex-col xl:flex-row ${fullscreen ? 'gap-6' : 'gap-2'}`}>
-           <div className={`flex-1 bg-black/40 rounded-lg border border-white/10 relative ${fullscreen ? 'p-6' : 'p-2'}`}>
-              <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-indigo-400/30 tracking-widest uppercase rounded-full">Inputs [PORTA]</span>
-              <div className={`flex justify-around items-center mt-1 ${fullscreen ? 'gap-4' : 'gap-1'}`}>
+        <div className={`flex flex-col xl:flex-row ${fullscreen ? 'gap-6' : 'gap-3'}`}>
+           <div className={`flex-1 bg-black/40 rounded-xl border border-white/10 relative ${fullscreen ? 'p-6' : 'p-3'}`}>
+              <div className={`flex justify-around items-center ${fullscreen ? 'gap-4' : 'gap-1'}`}>
                 {[7,6,5,4,3,2,1,0].map(bit => (
                   <TactileButton key={bit} label={`RA${bit}`} bitIndex={bit} isPressed={(state.PORTA & (1 << bit)) !== 0} onDown={handlePushDown} onUp={handlePushUp} fullscreen={fullscreen} />
                 ))}
               </div>
            </div>
-           <div className={`bg-black/40 rounded-lg border border-white/10 relative flex items-center justify-center min-w-fit ${fullscreen ? 'p-6 px-10' : 'p-2'}`}>
-              <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-white/15 tracking-widest uppercase rounded-full">Switches [PORTB]</span>
+           <div className={`bg-black/40 rounded-xl border border-white/10 relative flex items-center justify-center flex-1 ${fullscreen ? 'p-6 px-10' : 'p-3'}`}>
               <DipSwitch portValue={state.PORTB} onToggle={handleDipToggle} fullscreen={fullscreen} />
            </div>
         </div>

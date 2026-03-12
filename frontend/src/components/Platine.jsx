@@ -49,17 +49,17 @@ const TactileButton = ({ label, bitIndex, isPressed, onDown, onUp, fullscreen = 
 );
 
 const DipSwitch = ({ portValue, onToggle, fullscreen = false }) => (
-  <div className={`bg-[#b30000] p-3 rounded-lg flex flex-wrap justify-center border-2 border-black/50 shadow-2xl transition-all gap-1 ${fullscreen ? 'scale-110' : 'scale-90 sm:scale-100'}`}>
+  <div className={`bg-[#b30000] p-4 rounded-xl grid grid-cols-4 gap-2 border-2 border-black/50 shadow-2xl transition-all ${fullscreen ? 'scale-110' : 'scale-95 sm:scale-100'}`}>
     {[7, 6, 5, 4, 3, 2, 1, 0].map((bit) => {
       const isOn = (portValue & (1 << bit)) !== 0;
       return (
-        <div key={bit} className="flex flex-col items-center" onClick={() => onToggle(bit)}>
-          <span className="text-[8px] text-white/80 font-black mb-1">{bit}</span>
-          <div className="w-8 h-12 bg-black/40 rounded p-1 cursor-pointer border border-black/50">
-            <div className={`w-full h-5 rounded-sm transition-all flex items-center justify-center text-[8px] font-black ${
+        <div key={bit} className="flex flex-col items-center min-w-[36px]" onClick={() => onToggle(bit)}>
+          <span className="text-[9px] text-white/90 font-black mb-1 font-mono tracking-tighter">{bit}</span>
+          <div className="w-9 h-14 bg-black/60 rounded-md p-1.5 cursor-pointer border border-black/60 shadow-inner">
+            <div className={`w-full h-6 rounded transition-all flex items-center justify-center text-[8px] font-black ${
               isOn 
-              ? 'mt-0 bg-white border-white text-red-700 shadow-[0_0_10px_white]' 
-              : 'mt-5 bg-white/10 border-white/30 text-white opacity-40'
+              ? 'mt-0 bg-white border-white text-red-700 shadow-[0_0_12px_white]' 
+              : 'mt-5 bg-white/5 border-white/20 text-white/20'
             }`}>
                {isOn ? 'ON' : 'OFF'}
             </div>
@@ -90,7 +90,7 @@ const LED = ({ label, isOn, color = 'green', fullscreen = false }) => {
 const SevenSegment = ({ value, label, fullscreen = false }) => {
   const s = [(value&1)!=0, (value&2)!=0, (value&4)!=0, (value&8)!=0, (value&16)!=0, (value&32)!=0, (value&64)!=0, (value&128)!=0];
   const onColor = "#ff3333";
-  const offColor = "#1a1a2e";
+  const offColor = "#1a0000";
   const glow = "shadow-[0_0_15px_rgba(255,51,51,0.8)]";
 
   return (

@@ -3,7 +3,6 @@ import { Cpu, Play, Square, RefreshCw, Activity, Download, Layout } from 'lucide
 import CodeEditor from './components/Editor';
 import Platine from './components/Platine';
 import Console from './components/Console';
-import FloatingMemo from './components/FloatingMemo';
 
 const INITIAL_CODE = `#include <xc.h>
 
@@ -379,7 +378,8 @@ function App() {
              </button>
           </div>
 
-          <FloatingMemo />
+
+          {/* Hardware Interaction Overlays */}
 
           {/* Overlay for "Simulation Inactive" look if needed */}
           {!ws || ws.readyState !== WebSocket.OPEN ? (
@@ -392,8 +392,54 @@ function App() {
           ) : null}
         </div>
       </div>
+
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => setShowHelp(false)}>
+          <div className="max-w-2xl w-full bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-3xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-black tracking-tighter text-indigo-400">GUIDE DE LA PLATINE</h2>
+              <button onClick={() => setShowHelp(false)} className="text-white/20 hover:text-white">✕</button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Mappage Matériel</h3>
+                <div className="space-y-2 text-sm font-mono">
+                  <div className="flex justify-between"><span className="text-indigo-400">PORTB</span> <span>8x Interrupteurs</span></div>
+                  <div className="flex justify-between"><span className="text-indigo-400">PORTA</span> <span>8x Boutons (RA0-RA7)</span></div>
+                  <div className="flex justify-between"><span className="text-indigo-400">PORTD</span> <span>8x LEDs</span></div>
+                  <div className="flex justify-between"><span className="text-indigo-400">PORTC</span> <span>7-Seg A & Buzzer (bit 7)</span></div>
+                  <div className="flex justify-between"><span className="text-indigo-400">PORTE</span> <span>7-Seg B</span></div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Astuces de Code</h3>
+                <div className="space-y-3">
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                      <code className="text-emerald-400 text-xs font-bold">PORTC = seg(valeur);</code>
+                      <p className="text-[10px] text-white/40 mt-1 italic">Utilise seg() pour afficher un chiffre sur le 7-segments.</p>
+                   </div>
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                      <code className="text-amber-400 text-xs font-bold">if(RA0 == 1) ...</code>
+                      <p className="text-[10px] text-white/40 mt-1 italic">Vérifie l'état d'un bouton poussoir RAx.</p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-indigo-600/10 border border-indigo-500/20 p-4 rounded-2xl">
+              <h4 className="text-[10px] font-black text-indigo-400 uppercase mb-2">Raccourcis Clavier</h4>
+              <div className="grid grid-cols-2 gap-4 text-[10px] font-mono text-white/60">
+                <div>[0-7] : Actionner RA0-RA7</div>
+                <div>[CTRL+ENTREE] : Compiler & Run</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 export default App;

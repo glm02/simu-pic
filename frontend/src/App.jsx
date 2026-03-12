@@ -34,6 +34,10 @@ function App() {
   const [ws, setWs] = useState(null);
   const [leftWidth, setLeftWidth] = useState(45);
   const [isDragging, setIsDragging] = useState(false);
+  const [simSpeed, setSimSpeed] = useState(50);
+  const [isMuted, setIsMuted] = useState(false);
+  const [theme, setTheme] = useState('neon'); // neon | retro | slate
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -49,10 +53,25 @@ function App() {
         e.preventDefault();
         handleStep();
       }
+      // Feature 13: Keyboard 0-7 -> PORTA Buttons
+      if (e.key >= '0' && e.key <= '7') {
+         const bit = parseInt(e.key);
+         handleInputChange("PORTA", state.PORTA | (1 << bit));
+      }
+    };
+    const handleKeyUp = (e) => {
+      if (e.key >= '0' && e.key <= '7') {
+         const bit = parseInt(e.key);
+         handleInputChange("PORTA", state.PORTA & ~(1 << bit));
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [code, ws, isSimulating]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [code, ws, isSimulating, state.PORTA]);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -108,10 +127,20 @@ function App() {
     if (isSimulating && ws && ws.readyState === WebSocket.OPEN) {
       interval = setInterval(() => {
         ws.send(JSON.stringify({ type: "STEP" }));
-      }, 50); // Faster tick for better responsiveness
+      }, simSpeed); // Adjustable speed
     }
     return () => clearInterval(interval);
-  }, [isSimulating, ws]);
+  }, [isSimulating, ws, simSpeed]);
+
+  // Feature 8: LocalStorage persistence
+  useEffect(() => {
+    const saved = localStorage.getItem('simu-pic-code');
+    if (saved) setCode(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('simu-pic-code', code);
+  }, [code]);
 
   const handleRun = () => {
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -150,6 +179,35 @@ function App() {
     }
   };
 
+  const downloadCode = () => {
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `main.c`;
+    a.click();
+    setLogs(prev => [...prev, { type: 'success', text: "✓ Code téléchargé (main.c)", time: new Date().toLocaleTimeString() }]);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(code);
+    setLogs(prev => [...prev, { type: 'success', text: "✓ Code copié dans le presse-papier", time: new Date().toLocaleTimeString() }]);
+  };
+
+  const autoFormat = () => {
+    const lines = code.split('\n');
+    let depth = 0;
+    const formatted = lines.map(line => {
+      line = line.trim();
+      if (line.includes('}')) depth--;
+      const out = '    '.repeat(Math.max(0, depth)) + line;
+      if (line.includes('{')) depth++;
+      return out;
+    }).join('\n');
+    setCode(formatted);
+    setLogs(prev => [...prev, { type: 'info', text: "⚡ Code formaté automatiquement.", time: new Date().toLocaleTimeString() }]);
+  };
+
   const downloadLogs = () => {
     const content = logs.map(l => `[${l.time}] ${l.type === 'error' ? 'ERR: ' : l.type === 'success' ? 'OK: ' : ''}${l.text}`).join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
@@ -162,10 +220,11 @@ function App() {
 
   const EXAMPLES = {
     "EMPTY": "// Nouveau projet\nvoid main(void) {\n    while(1) {\n        \n    }\n}",
-    "MIROIR": "// Miroir: PORTD suit PORTB\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    while(1) {\n        PORTD = PORTB;\n    }\n}",
+    "MIROIR": "// Miroir: PORTD suit PORTB\nvoid main(void) {\n    TRISB = 0xFF; // Entrées\n    TRISD = 0x00; // Sorties\n    while(1) {\n        PORTD = PORTB;\n    }\n}",
     "CHENILLARD": "// Chenillard: Rotation de bits\nvoid main(void) {\n    TRISD = 0x00;\n    unsigned char val = 1;\n    while(1) {\n        PORTD = val;\n        val = (val << 1) | (val >> 7);\n        __delay_ms(100);\n    }\n}",
-    "ADC_LCD": "// ADC vers LCD\nvoid main(void) {\n    while(1) {\n        unsigned char val = ADRESH;\n        PORTD = val;\n        if(val > 128) printf(\"SEUIL ATTEINT\");\n        else printf(\"NORMAL\");\n    }\n}",
-    "COUNTER": "// Compteur 7-seg\nvoid main(void) {\n    unsigned char i = 0;\n    while(1) {\n        PORTC = seg(i);\n        i = (i + 1) % 16;\n        __delay_ms(500);\n    }\n}"
+    "ADC_LCD": "// ADC vers LCD\nvoid main(void) {\n    while(1) {\n        unsigned char val = ADRESH;\n        PORTD = val;\n        if(val > 128) printf(\"SEUIL ATTEINT\");\n        else printf(\"VAL: %d\", val);\n    }\n}",
+    "COUNTER": "// Compteur 7-seg\nvoid main(void) {\n    unsigned char i = 0;\n    while(1) {\n        PORTC = seg(i);\n        i = (i + 1) % 10;\n        __delay_ms(500);\n    }\n}",
+    "INTERRUPT": "// Demo: Simulation Interruption\nvoid main(void) {\n    TRISB = 0xFF;\n    while(1) {\n       if(RA0) PORTD = 0xFF;\n       else PORTD = 0x00;\n    }\n}"
   };
 
   const loadExample = (id) => {
@@ -181,7 +240,11 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#050505] text-slate-300 font-sans overflow-hidden select-none animate-hardware-boot">
+    <div className={`flex flex-col h-screen font-sans overflow-hidden select-none animate-hardware-boot transition-colors duration-1000 ${
+      theme === 'neon' ? 'bg-[#050505] text-slate-300' : 
+      theme === 'retro' ? 'bg-[#1a1a00] text-[#8fbc8f]' : 
+      'bg-slate-900 text-slate-100'
+    }`}>
       {/* Header */}
       <div className={`h-14 flex items-center justify-between px-8 border-b transition-all duration-500 backdrop-blur-xl z-20 ${
         isSimulating ? 'bg-green-500/5 border-green-500/20 shadow-[0_0_40px_rgba(34,197,94,0.1)]' : 'bg-[#0a0a0a]/80 border-white/5 shadow-2xl'
@@ -193,11 +256,11 @@ function App() {
           <div className="flex flex-col">
             <span className="font-black tracking-[0.2em] text-xs uppercase text-white/90">SIMU-PIC PRO</span>
             <div className="flex items-center space-x-2 mt-0.5">
-               <span className="text-[9px] text-white/20 font-mono tracking-tighter">ENVIRONMENT v2.5 | 16-BIT ENGINE</span>
+               <span className="text-[9px] text-white/20 font-mono tracking-tighter">ENV: v2.5 | TICK: {simSpeed}ms | SRC: RAFAEL_GEII</span>
                {isSimulating && (
                  <div className="flex items-center space-x-1 px-1.5 py-0.5 bg-green-500/10 rounded-full border border-green-500/20">
-                    <span className="w-1 h-1 bg-green-500 rounded-full animate-ping"></span>
-                    <span className="text-[8px] text-green-400 font-bold uppercase tracking-widest">Live Logic</span>
+                    <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                    <span className="text-[8px] text-green-400 font-bold uppercase tracking-widest">Running</span>
                  </div>
                )}
             </div>
@@ -209,57 +272,64 @@ function App() {
             onChange={(e) => loadExample(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-[10px] font-black tracking-widest text-indigo-400 uppercase outline-none hover:bg-white/10 transition-all"
           >
-            <option value="EMPTY">Fichiers Exemples</option>
-            <option value="MIROIR">TP 1: Miroir PORTB</option>
-            <option value="CHENILLARD">TP 2: Chenillard</option>
-            <option value="ADC_LCD">TP 3: ADC + LCD</option>
-            <option value="COUNTER">TP 4: Compteur 7-seg</option>
+            <option value="EMPTY">Snippets Library</option>
+            <option value="MIROIR">Mirror (PORTB)</option>
+            <option value="CHENILLARD">Caterpillar (PORTD)</option>
+            <option value="ADC_LCD">Logic: ADC/LCD</option>
+            <option value="COUNTER">Counter: 7-seg</option>
+            <option value="INTERRUPT">Interrupt Logic</option>
           </select>
+
+          <div className="flex items-center space-x-1 bg-white/5 p-1 rounded-lg border border-white/5">
+             <button onClick={copyToClipboard} title="Copy Code" className="p-1 px-2 hover:bg-white/10 rounded transition-all text-white/30 hover:text-white"><Cpu size={14} /></button>
+             <button onClick={downloadCode} title="Download .c" className="p-1 px-2 hover:bg-white/10 rounded transition-all text-white/30 hover:text-white"><Download size={14} /></button>
+             <button onClick={autoFormat} title="Auto-Format" className="p-1 px-2 hover:bg-white/10 rounded transition-all text-white/30 hover:text-white"><Layout size={14} /></button>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-4 mr-4">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
              <div className="flex flex-col items-end">
-                <span className="text-[8px] text-white/30 font-black uppercase tracking-widest mb-1">Potentiomètre_ADC</span>
-                <input type="range" min="0" max="255" value={state.ADRESH || 0} onChange={handleADCClick} className="w-32 accent-indigo-500" />
+                <div className="flex justify-between w-full mb-1">
+                   <span className="text-[7px] text-white/20 font-black tracking-widest uppercase">Speed</span>
+                   <span className="text-[7px] text-indigo-400 font-mono">{simSpeed}ms</span>
+                </div>
+                <input type="range" min="10" max="1000" step="10" value={simSpeed} onChange={(e) => setSimSpeed(parseInt(e.target.value))} className="w-20 accent-indigo-500 h-1" />
              </div>
           </div>
 
-          <div className="flex items-center space-x-2 mr-4 bg-white/5 p-1 rounded-lg border border-white/5">
-             <button onClick={() => setLedColor('red')} className={`w-4 h-4 rounded-full bg-red-500 border-2 transition-all ${ledColor === 'red' ? 'border-white scale-125' : 'border-transparent opacity-40 hover:opacity-100'}`}></button>
-             <button onClick={() => setLedColor('green')} className={`w-4 h-4 rounded-full bg-emerald-500 border-2 transition-all ${ledColor === 'green' ? 'border-white scale-125' : 'border-transparent opacity-40 hover:opacity-100'}`}></button>
-             <button onClick={() => setLedColor('blue')} className={`w-4 h-4 rounded-full bg-blue-500 border-2 transition-all ${ledColor === 'blue' ? 'border-white scale-125' : 'border-transparent opacity-40 hover:opacity-100'}`}></button>
+          <div className="flex items-center space-x-2 bg-black/40 p-1 px-2 rounded-lg border border-white/5">
+             <button onClick={() => setLedColor('red')} className={`w-3 h-3 rounded-full bg-red-500 transition-all ${ledColor === 'red' ? 'ring-2 ring-white scale-110' : 'opacity-30'}`}></button>
+             <button onClick={() => setLedColor('green')} className={`w-3 h-3 rounded-full bg-emerald-500 transition-all ${ledColor === 'green' ? 'ring-2 ring-white scale-110' : 'opacity-30'}`}></button>
+             <button onClick={() => setLedColor('blue')} className={`w-3 h-3 rounded-full bg-blue-500 transition-all ${ledColor === 'blue' ? 'ring-2 ring-white scale-110' : 'opacity-30'}`}></button>
+             <div className="w-px h-3 bg-white/10 mx-1"></div>
+             <button onClick={() => setTheme(theme === 'neon' ? 'retro' : theme === 'retro' ? 'slate' : 'neon')} className="p-1 px-2 hover:bg-white/10 rounded text-[9px] font-black text-indigo-400">
+                {theme.toUpperCase()}
+             </button>
+             <button onClick={() => setShowHelp(true)} className="p-1 px-2 bg-indigo-600/20 text-indigo-400 rounded border border-indigo-500/30 text-[9px] font-black">
+                HELP
+             </button>
           </div>
 
-          <div className="flex items-center space-x-1 bg-white/5 p-1 rounded-xl border border-white/5 backdrop-blur-2xl shadow-inner group">
-            <button onClick={downloadLogs} className="p-1.5 px-3 hover:bg-white/10 rounded-lg text-[10px] font-black tracking-widest transition-all flex items-center space-x-2 text-white/30 hover:text-white">
-                <Download size={12} />
-                <span>EX_LOG</span>
+          <div className="flex items-center space-x-1 bg-white/5 p-1 rounded-xl border border-white/5 shadow-inner group">
+            <button onClick={handleReset} title="Hard Reset" className="p-1.5 px-3 hover:bg-white/10 rounded-lg text-white/30 hover:text-indigo-400 transition-all">
+                <RefreshCw size={14} className={isCompiling ? 'animate-spin' : ''} />
             </button>
             <div className="w-px h-5 bg-white/10 mx-1"></div>
-            <button onClick={handleReset} className="p-1.5 px-4 hover:bg-white/10 rounded-lg text-[10px] font-black tracking-widest transition-all flex items-center space-x-2 text-white/30 hover:text-white group-hover:text-indigo-400">
-                <RefreshCw size={12} className={isCompiling ? 'animate-spin' : ''} />
-                <span>HARD_RESET</span>
-            </button>
-            <div className="w-px h-5 bg-white/10 mx-1"></div>
-            <button onClick={handleStep} disabled={isSimulating} className={`p-1.5 px-4 rounded-lg text-[10px] font-black tracking-widest transition-all flex items-center space-x-2 ${isSimulating ? 'opacity-10 cursor-not-allowed' : 'hover:bg-white/10 text-white/30 hover:text-white group-hover:text-amber-400'}`}>
-                <RefreshCw size={12} />
-                <span>STEP_ONE</span>
+            <button onClick={handleStep} disabled={isSimulating} title="Single Step" className={`p-1.5 px-3 rounded-lg transition-all ${isSimulating ? 'opacity-10' : 'hover:bg-white/10 text-white/30 hover:text-amber-400'}`}>
+                <Activity size={14} />
             </button>
           </div>
 
           <button 
             onClick={isSimulating ? handleStop : handleRun}
             disabled={isCompiling}
-            className={`group relative flex items-center space-x-3 px-8 py-2.5 rounded-xl font-black text-xs tracking-[0.2em] transition-all duration-300 transform active:scale-95 overflow-hidden ${
-              isSimulating 
-              ? 'bg-red-600/10 text-red-500 border border-red-500/30 hover:bg-red-600/20 shadow-[0_0_30px_rgba(220,38,38,0.2)]' 
-              : 'bg-indigo-600 text-white shadow-[0_10px_30px_rgba(79,70,229,0.4)] hover:bg-indigo-500 hover:-translate-y-0.5'
-            } ${isCompiling ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center space-x-3 px-6 py-2.5 rounded-xl font-black text-[10px] tracking-widest transition-all ${
+              isSimulating ? 'bg-red-600/10 text-red-500 border border-red-500/30' : 'bg-indigo-600 text-white shadow-lg'
+            }`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-            {isCompiling ? <RefreshCw size={15} className="animate-spin" /> : (isSimulating ? <Square size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />)}
-            <span>{isCompiling ? "BOOTING..." : (isSimulating ? "STOP_CORE" : "RUN_PROJECT")}</span>
+            {isCompiling ? <RefreshCw size={14} className="animate-spin" /> : (isSimulating ? <Square size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />)}
+            <span>{isCompiling ? "BOOT..." : (isSimulating ? "STOP" : "RUN")}</span>
           </button>
         </div>
       </div>
@@ -268,7 +338,7 @@ function App() {
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left: Editor & Console */}
         <div 
-          style={{ width: isBoardFullscreen ? '0%' : `${leftWidth}%` }} 
+          style={{ width: isBoardFullscreen ? '0%' : '52%' }} 
           className={`flex flex-col border-r border-white/5 relative bg-[#0a0a0a] transition-all duration-700 ${isBoardFullscreen ? 'translate-x-[-100%] opacity-0' : 'translate-x-0 opacity-100'}`}
         >
           <div className="flex-1 overflow-hidden">
@@ -277,18 +347,27 @@ function App() {
           <Console logs={logs} onClear={() => setLogs([{ type: 'info', text: "Console re-initialized.", time: new Date().toLocaleTimeString() }])} />
         </div>
 
-        {/* Improved Resize Handle */}
-        {!isBoardFullscreen && (
-          <div 
-            onMouseDown={startResizing}
-            className={`w-1 transition-all duration-300 cursor-col-resize z-30 relative flex items-center justify-center group ${isDragging ? 'bg-indigo-500 border-x border-indigo-400/50 shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 hover:bg-white/10'}`}
-          >
-            <div className={`w-0.5 h-16 rounded-full transition-all ${isDragging ? 'bg-white scale-y-125' : 'bg-white/10 group-hover:bg-indigo-500/50'}`}></div>
-          </div>
-        )}
+        {/* Right: Board Area */}
+        <div className={`flex flex-col bg-[#050505] overflow-hidden relative transition-all duration-700 ${isBoardFullscreen ? 'flex-1' : 'w-[48%]'}`}>
+          {!isBoardFullscreen && (
+            <div className="px-4 py-2 bg-white/5 border-b border-white/5 text-[9px] text-white/30 font-black uppercase tracking-[0.2em] flex justify-between items-center shrink-0">
+               <span>🔌 Platine Laboratoire — GEII Lyon 1</span>
+               <div className="flex items-center space-x-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span>System_Active</span>
+               </div>
+            </div>
+          )}
 
-        {/* Right: Board */}
-        <div className={`flex-1 flex flex-col bg-[#050505] overflow-hidden relative transition-all duration-700 ${isBoardFullscreen ? 'w-full' : ''}`}>
+          <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[radial-gradient(circle_at_center,_#0a1a0f_0%,_#050505_100%)]">
+             <Platine 
+                state={state} 
+                onInputChange={handleInputChange} 
+                ledColor={ledColor} 
+                fullscreen={isBoardFullscreen} 
+             />
+          </div>
+          
           <div className="absolute top-6 left-6 z-50">
              <button 
                onClick={() => setIsBoardFullscreen(!isBoardFullscreen)}
@@ -298,7 +377,6 @@ function App() {
              </button>
           </div>
 
-          <Platine state={state} onInputChange={handleInputChange} ledColor={ledColor} />
           <FloatingMemo />
 
           {/* Overlay for "Simulation Inactive" look if needed */}

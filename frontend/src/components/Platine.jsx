@@ -10,36 +10,38 @@ const Screw = () => (
   </div>
 );
 
-const LCDScreen = ({ line1 = "", line2 = "" }) => (
+const LCDScreen = ({ line1 = "", line2 = "", fullscreen = false }) => (
   <div className="flex flex-col items-center">
-    <div className="bg-[#1a1a1a] p-2 rounded-lg shadow-2xl border border-white/10 relative overflow-hidden">
-      <div className="bg-[#8fbc8f] p-4 min-w-[280px] rounded shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-        <div className="font-mono text-[#0a1a00] text-xl tracking-[0.2em] font-black uppercase">
+    <div className={`bg-[#1a1a1a] p-2 rounded-lg shadow-2xl border border-white/10 relative overflow-hidden transition-all duration-500 ${fullscreen ? 'scale-125 my-4' : 'scale-100'}`}>
+      <div className={`bg-[#8fbc8f] p-4 min-w-[280px] rounded shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] ${fullscreen ? 'min-w-[400px]' : ''}`}>
+        <div className={`font-mono text-[#0a1a00] tracking-[0.2em] font-black uppercase ${fullscreen ? 'text-3xl' : 'text-xl'}`}>
           {line1.padEnd(16, ' ').substring(0, 16)}
         </div>
-        <div className="font-mono text-[#0a1a00] text-xl tracking-[0.2em] font-black uppercase mt-1">
+        <div className={`font-mono text-[#0a1a00] tracking-[0.2em] font-black uppercase mt-1 ${fullscreen ? 'text-3xl' : 'text-xl'}`}>
           {line2.padEnd(16, ' ').substring(0, 16)}
         </div>
       </div>
     </div>
-    <span className="text-[10px] text-white/30 font-mono mt-2 tracking-widest">PERIPH: LCD_DRIVER_4BIT</span>
+    <span className={`text-white/30 font-mono mt-2 tracking-widest ${fullscreen ? 'text-xs' : 'text-[10px]'}`}>PERIPH: LCD_DRIVER_4BIT_HQ</span>
   </div>
 );
 
-const TactileButton = ({ label, bitIndex, isPressed, onDown, onUp }) => (
+const TactileButton = ({ label, bitIndex, isPressed, onDown, onUp, fullscreen = false }) => (
   <div className="flex flex-col items-center">
     <div 
       onMouseDown={() => onDown(bitIndex)} onMouseUp={() => onUp(bitIndex)} onMouseLeave={() => isPressed && onUp(bitIndex)}
-      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border-2 transition-all cursor-pointer ${isPressed ? 'bg-indigo-500 border-white scale-95 shadow-inner' : 'bg-[#333] border-white/20 hover:border-white/40 shadow-lg'}`}
+      className={`rounded-xl flex items-center justify-center border-2 transition-all cursor-pointer ${
+        fullscreen ? 'w-16 h-16' : 'w-10 h-10 sm:w-12 sm:h-12'
+      } ${isPressed ? 'bg-indigo-500 border-white scale-95 shadow-inner' : 'bg-[#333] border-white/20 hover:border-white/40 shadow-lg'}`}
     >
-      <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-black/20 ${isPressed ? 'bg-indigo-300' : 'bg-[#444]'}`}></div>
+      <div className={`rounded-full border border-black/20 ${fullscreen ? 'w-8 h-8' : 'w-5 h-5 sm:w-6 sm:h-6'} ${isPressed ? 'bg-indigo-300' : 'bg-[#444]'}`}></div>
     </div>
-    <span className={`text-[9px] sm:text-[10px] font-mono mt-2 font-bold ${isPressed ? 'text-indigo-400' : 'text-white/60'}`}>{label}</span>
+    <span className={`font-mono mt-2 font-bold ${fullscreen ? 'text-xs' : 'text-[9px] sm:text-[10px]'} ${isPressed ? 'text-indigo-400' : 'text-white/60'}`}>{label}</span>
   </div>
 );
 
-const DipSwitch = ({ portValue, onToggle }) => (
-  <div className="bg-[#b30000] p-3 rounded-lg flex space-x-1 border-2 border-black/50 shadow-2xl scale-100 sm:scale-110">
+const DipSwitch = ({ portValue, onToggle, fullscreen = false }) => (
+  <div className={`bg-[#b30000] p-3 rounded-lg flex space-x-1 border-2 border-black/50 shadow-2xl transition-all ${fullscreen ? 'scale-125 mx-6' : 'scale-100 sm:scale-110'}`}>
     {[7, 6, 5, 4, 3, 2, 1, 0].map((bit) => {
       const isOn = (portValue & (1 << bit)) !== 0;
       return (
@@ -54,7 +56,7 @@ const DipSwitch = ({ portValue, onToggle }) => (
   </div>
 );
 
-const LED = ({ label, isOn, color = 'green' }) => {
+const LED = ({ label, isOn, color = 'green', fullscreen = false }) => {
   const colors = {
     red: 'bg-red-500 shadow-[0_0_15px_#ff0000]',
     green: 'bg-green-500 shadow-[0_0_15px_#22c55e]',
@@ -63,18 +65,20 @@ const LED = ({ label, isOn, color = 'green' }) => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border border-white/5 transition-all duration-300 ${isOn ? colors[color] + ' animate-pulse' : 'bg-[#1a1a1a]'}`}></div>
-      {label && <span className={`text-[6px] font-black mt-1 ${isOn ? 'text-white/80' : 'text-white/10'}`}>{label}</span>}
+      <div className={`rounded-full border border-white/5 transition-all duration-300 ${
+        fullscreen ? 'w-6 h-6' : 'w-3 h-3 sm:w-4 sm:h-4'
+      } ${isOn ? colors[color] + ' animate-pulse' : 'bg-[#1a1a1a]'}`}></div>
+      {label && <span className={`font-black mt-1 ${fullscreen ? 'text-[8px]' : 'text-[6px]'} ${isOn ? 'text-white/80' : 'text-white/10'}`}>{label}</span>}
     </div>
   );
 };
 
-const SevenSegment = ({ value, label }) => {
+const SevenSegment = ({ value, label, fullscreen = false }) => {
   const s = [(value&1)!=0, (value&2)!=0, (value&4)!=0, (value&8)!=0, (value&16)!=0, (value&32)!=0, (value&64)!=0, (value&128)!=0];
   return (
     <div className="flex flex-col items-center">
-      <div className="bg-black p-4 rounded-xl border border-white/10 shadow-3xl">
-        <svg viewBox="0 0 100 150" className="w-12 h-18">
+      <div className={`bg-black p-4 rounded-xl border border-white/10 shadow-3xl transition-all ${fullscreen ? 'scale-125' : 'scale-100'}`}>
+        <svg viewBox="0 0 100 150" className={`${fullscreen ? 'w-16 h-24' : 'w-12 h-18'}`}>
           <polygon points="20,10 80,10 75,20 25,20" fill={s[0] ? "#f00" : "#100"} />
           <polygon points="85,15 85,70 75,65 75,25" fill={s[1] ? "#f00" : "#100"} />
           <polygon points="85,80 85,135 75,125 75,85" fill={s[2] ? "#f00" : "#100"} />
@@ -85,12 +89,12 @@ const SevenSegment = ({ value, label }) => {
           <circle cx="90" cy="140" r="5" fill={s[7] ? "#f00" : "#100"} />
         </svg>
       </div>
-      <span className="text-[9px] text-white/40 mt-2 font-mono uppercase">{label}</span>
+      <span className={`text-white/40 mt-2 font-mono uppercase ${fullscreen ? 'text-[10px]' : 'text-[9px]'}`}>{label}</span>
     </div>
   );
 };
 
-const Platine = ({ state, onInputChange, ledColor = 'red' }) => {
+const Platine = ({ state, onInputChange, ledColor = 'red', fullscreen = false }) => {
   if (!state) return <div className="p-10 text-white font-mono">WAITING FOR HARDWARE...</div>;
 
   const handlePushDown = (bit) => onInputChange("PORTA", state.PORTA | (1 << bit));
@@ -98,9 +102,11 @@ const Platine = ({ state, onInputChange, ledColor = 'red' }) => {
   const handleDipToggle = (bit) => onInputChange("PORTB", state.PORTB ^ (1 << bit));
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-[#050505] p-2 sm:p-4 overflow-y-auto">
+    <div className={`w-full h-full flex flex-col items-center p-2 sm:p-4 overflow-y-auto overflow-x-hidden ${fullscreen ? 'bg-black/60' : 'bg-transparent'}`}>
       {/* THE MAIN PCB */}
-      <div className="w-full max-w-[850px] bg-[#0d2b17] rounded-[1.5rem] border-[6px] border-[#081a0e] p-4 sm:p-5 shadow-inner relative overflow-visible scale-[0.95] lg:scale-100 origin-top">
+      <div className={`w-full transition-all duration-700 bg-[#0d2b17] rounded-[2rem] border-[8px] border-[#081a0e] p-6 sm:p-8 shadow-2xl relative ${
+        fullscreen ? 'max-w-[1400px] min-h-[85vh] scale-100 mt-10' : 'max-w-[1000px] scale-[0.98] origin-top'
+      }`}>
         
         {/* Decorative elements */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 px-6 py-0.5 bg-black/40 rounded-full border border-white/5 text-[8px] text-white/10 font-mono tracking-[0.6em] uppercase">
@@ -144,54 +150,86 @@ const Platine = ({ state, onInputChange, ledColor = 'red' }) => {
 
           {/* 2. OUTPUT ZONE: LEDs */}
           <div className="bg-black/30 p-2 rounded-lg border border-white/5 mx-2">
-             <div className="flex justify-around items-center flex-wrap gap-1">
+           <div className={`flex justify-around items-center flex-wrap ${fullscreen ? 'gap-6' : 'gap-1'}`}>
+              {[7,6,5,4,3,2,1,0].map(bit => (
+                <LED key={bit} label={null} isOn={(state.PORTD & (1 << bit)) !== 0} color={ledColor} fullscreen={fullscreen} />
+              ))}
+           </div>
+        </div>
+
+        {/* 3. DISPLAY & INPUTS MIX */}
+        <div className={`grid grid-cols-1 lg:grid-cols-2 ${fullscreen ? 'gap-8 my-6' : 'gap-2'}`}>
+           <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex items-center justify-center min-h-[80px]">
+              <LCDScreen line1={state.LCD_LINE1} line2={state.LCD_LINE2} fullscreen={fullscreen} />
+           </div>
+           <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex justify-around items-center">
+              <SevenSegment value={state.PORTC} label="SEG_A" fullscreen={fullscreen} />
+              <SevenSegment value={state.PORTE} label="SEG_B" fullscreen={fullscreen} />
+           </div>
+        </div>
+
+        {/* 4. INPUT ZONE */}
+        <div className={`flex flex-col xl:flex-row ${fullscreen ? 'gap-6' : 'gap-2'}`}>
+           <div className={`flex-1 bg-black/40 rounded-lg border border-white/10 relative ${fullscreen ? 'p-6' : 'p-2'}`}>
+              <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-indigo-400/30 tracking-widest uppercase rounded-full">Inputs [PORTA]</span>
+              <div className={`flex justify-around items-center mt-1 ${fullscreen ? 'gap-4' : 'gap-1'}`}>
                 {[7,6,5,4,3,2,1,0].map(bit => (
-                  <LED key={bit} label={null} isOn={(state.PORTD & (1 << bit)) !== 0} color={ledColor} />
+                  <TactileButton key={bit} label={`RA${bit}`} bitIndex={bit} isPressed={(state.PORTA & (1 << bit)) !== 0} onDown={handlePushDown} onUp={handlePushUp} fullscreen={fullscreen} />
                 ))}
-             </div>
-          </div>
+              </div>
+           </div>
+           <div className={`bg-black/40 rounded-lg border border-white/10 relative flex items-center justify-center min-w-fit ${fullscreen ? 'p-6 px-10' : 'p-2'}`}>
+              <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-white/15 tracking-widest uppercase rounded-full">Switches [PORTB]</span>
+              <DipSwitch portValue={state.PORTB} onToggle={handleDipToggle} fullscreen={fullscreen} />
+           </div>
+        </div>
 
-          {/* 3. DISPLAY & INPUTS MIX */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-             <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex items-center justify-center min-h-[80px]">
-                <LCDScreen line1={state.LCD_LINE1} line2={state.LCD_LINE2} />
-             </div>
-             <div className="bg-black/30 p-2 rounded-lg border border-white/5 flex justify-around items-center">
-                <SevenSegment value={state.PORTC} label="SEG_A" />
-                <SevenSegment value={state.PORTE} label="SEG_B" />
-             </div>
-          </div>
-
-          {/* 4. INPUT ZONE */}
-          <div className="flex flex-col xl:flex-row gap-2">
-             <div className="flex-1 bg-black/40 p-2 rounded-lg border border-white/10 relative">
-                <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-indigo-400/30 tracking-widest uppercase rounded-full">Inputs [PORTA]</span>
-                <div className="flex justify-around items-center mt-1 gap-1">
-                  {[7,6,5,4,3,2,1,0].map(bit => (
-                    <TactileButton key={bit} label={`RA${bit}`} bitIndex={bit} isPressed={(state.PORTA & (1 << bit)) !== 0} onDown={handlePushDown} onUp={handlePushUp} />
-                  ))}
+          {/* 5. PERIPHERALS & FOOTER */}
+          <div className="bg-black/20 p-2 rounded-xl border border-white/5 flex flex-col items-center">
+             <div className="flex items-center justify-center space-x-6 w-full mb-1">
+                <div className="flex flex-col items-center">
+                   <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${state.PORTC & 0x80 ? 'bg-red-500/20 border-red-500 shadow-[0_0_10px_#ff0000]' : 'bg-black/40 border-white/5'}`}>
+                      <Volume2 size={16} className={state.PORTC & 0x80 ? 'text-red-500' : 'text-white/5'} />
+                   </div>
                 </div>
+                <div className="text-[7px] text-white/10 font-mono italic">SYST_RUNNING_OK</div>
              </div>
-             <div className="bg-black/40 p-2 rounded-lg border border-white/10 relative flex items-center justify-center min-w-fit">
-                <span className="absolute -top-1.5 left-4 bg-[#001a0a] px-2 text-[6px] font-black text-white/15 tracking-widest uppercase rounded-full">Switches [PORTB]</span>
-                <DipSwitch portValue={state.PORTB} onToggle={handleDipToggle} />
+             
+             {/* Feature 1: Student Signature */}
+             <div className="w-full border-t border-white/5 pt-1 mt-1 flex justify-between items-center px-4">
+                <span className="text-[6px] text-white/20 font-black uppercase tracking-widest">LYON 1 UCBL</span>
+                <span className="text-[8px] text-indigo-400/50 font-black italic tracking-tighter">Fait par Rafael - Étudiant en GEII</span>
+                <span className="text-[6px] text-white/20 font-black uppercase tracking-widest">2026-PROMO</span>
              </div>
-          </div>
-
-          {/* 5. PERIPHERALS */}
-          <div className="bg-black/20 p-3 rounded-xl border border-white/5 flex items-center justify-center space-x-8">
-             <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${state.PORTC & 0x80 ? 'bg-red-500/20 border-red-500' : 'bg-black/40 border-white/5'}`}>
-                   <Volume2 size={16} className={state.PORTC & 0x80 ? 'text-red-500' : 'text-white/5'} />
-                </div>
-             </div>
-             <div className="text-[7px] text-white/5 font-mono italic">UNIT_SYNC_ACTIVE</div>
           </div>
 
         </div>
       </div>
       
-      <div className="mt-12 text-[10px] font-mono text-white/10 tracking-[1em] uppercase">
+      {/* Feature 10: CPU Register Panel (Compact) */}
+      <div className="flex justify-center mt-4">
+          <div className="bg-black/80 border border-white/10 rounded-xl p-2 px-4 flex items-center gap-6 backdrop-blur-3xl shadow-3xl border-b-emerald-500 border-b-2">
+             <div className="flex items-center gap-2">
+                <ShieldCheck size={12} className="text-emerald-500" />
+                <span className="text-[7px] font-black text-white/40 uppercase tracking-widest">Register_Sync</span>
+             </div>
+             <div className="flex gap-4">
+                {[
+                  { n: 'W', v: state.W || 0 },
+                  { n: 'BSR', v: state.BSR || 0 },
+                  { n: 'STATUS', v: state.STATUS || 0 },
+                  { n: 'PCL', v: state.PCL || 0 }
+                ].map(r => (
+                  <div key={r.n} className="flex gap-2 items-center text-[8px] font-mono">
+                     <span className="text-white/20">{r.n}:</span>
+                     <span className="text-emerald-400 bg-white/5 px-1 rounded tabular-nums border border-white/5">0x{r.v.toString(16).toUpperCase().padStart(2, '0')}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
+      </div>
+
+      <div className="mt-6 text-[9px] font-mono text-white/5 tracking-[1em] uppercase">
           Logic Unit Synchronized // PIC16F1789
       </div>
     </div>

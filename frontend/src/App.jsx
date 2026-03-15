@@ -51,19 +51,23 @@ const EXAMPLES = {
   EMPTY:
     "// Nouveau projet\nvoid main(void) {\n    while(1) {\n        \n    }\n}",
   MIROIR:
-    "// Miroir : PORTD suit PORTB\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    while(1) {\n        PORTD = PORTB;\n    }\n}",
+    "// Miroir PORTB → PORTD\n#include <xc.h>\nvoid main(void) {\n    TRISB = 0xFF; // PORTB = entrées\n    TRISD = 0x00; // PORTD = sorties\n    while(1) {\n        PORTD = PORTB;\n    }\n}",
   CHENILLARD:
-    "// Chenillard : rotation de bits\nvoid main(void) {\n    TRISD = 0x00;\n    unsigned char val = 1;\n    while(1) {\n        PORTD = val;\n        val = (val << 1) | (val >> 7);\n        __delay_ms(100);\n    }\n}",
+    "// Chenillard : rotation de bits\n#include <xc.h>\nvoid main(void) {\n    TRISD = 0x00;\n    unsigned char val = 1;\n    while(1) {\n        PORTD = val;\n        val = (val << 1) | (val >> 7);\n        __delay_ms(100);\n    }\n}",
   ADC_LCD:
-    '// ADC vers LCD + LEDs\nvoid main(void) {\n    TRISD = 0x00;\n    while(1) {\n        unsigned char val = ADRESH;\n        PORTD = val;\n        if(val > 128) printf("SEUIL: %d", val);\n        else printf("VAL : %d", val);\n    }\n}',
-  COUNTER:
-    "// Compteur 7-segments\nvoid main(void) {\n    unsigned char i = 0;\n    TRISC = 0x00;\n    while(1) {\n        PORTC = seg(i);\n        i = (i + 1) % 16;\n        __delay_ms(500);\n    }\n}",
+    '// ADC → LCD + LEDs\n#include <xc.h>\nvoid main(void) {\n    TRISD = 0x00;\n    ANSELA = 0xFF;\n    while(1) {\n        unsigned char val = ADRESH;\n        PORTD = val;\n        if(val > 200) printf("HAUT: %d", val);\n        else if(val > 100) printf("MED : %d", val);\n        else printf("BAS : %d", val);\n    }\n}',
+  SEG_COMPTEUR:
+    "// Afficheur 7-segments — compteur 0-9\n#include <xc.h>\nvoid main(void) {\n    TRISC = 0x00; // PORTC = sorties (SEG_A)\n    TRISE = 0x00; // PORTE = sorties (SEG_B)\n    unsigned char i = 0;\n    while(1) {\n        PORTC = seg(i);      // Affiche i sur SEG A\n        PORTE = seg(9 - i);  // Affiche 9-i sur SEG B\n        i = (i + 1) % 10;\n        __delay_ms(500);\n    }\n}",
+  SEG_BOUTON:
+    "// Afficheur contrôlé par bouton RA0\n#include <xc.h>\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISC = 0x00;\n    unsigned char val = 0;\n    while(1) {\n        if(RA0) {\n            val = (val + 1) % 16;\n            PORTC = seg(val);\n        }\n    }\n}",
   COMPOUND:
-    "// Test operateurs composes\nvoid main(void) {\n    TRISD = 0x00;\n    unsigned char x = 0;\n    while(1) {\n        x += 1;\n        PORTD = x;\n        __delay_ms(200);\n    }\n}",
+    "// Opérateurs composés +=, |=, &=\n#include <xc.h>\nvoid main(void) {\n    TRISD = 0x00;\n    unsigned char x = 0;\n    while(1) {\n        x += 1;\n        x &= 0xFF;\n        PORTD = x;\n        __delay_ms(100);\n    }\n}",
   IF_ELSE:
-    "// If / else-if / else\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    while(1) {\n        unsigned char v = PORTB;\n        if(v == 0) PORTD = 0x00;\n        else if(v < 128) PORTD = 0x0F;\n        else PORTD = 0xFF;\n    }\n}",
+    "// If / else-if / else avec seuils ADC\n#include <xc.h>\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    while(1) {\n        unsigned char v = PORTB;\n        if(v == 0)       PORTD = 0x00;\n        else if(v < 64)  PORTD = 0x03;\n        else if(v < 128) PORTD = 0x0F;\n        else if(v < 192) PORTD = 0x3F;\n        else             PORTD = 0xFF;\n    }\n}",
   SWITCH:
-    "// Switch / case\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    TRISC = 0x00;\n    while(1) {\n        switch(PORTB & 0x03) {\n            case 0: PORTD = 0x01; break;\n            case 1: PORTD = 0x03; break;\n            case 2: PORTD = 0x0F; break;\n            default: PORTD = 0xFF; break;\n        }\n    }\n}",
+    "// Switch / case sur PORTB bas 2 bits\n#include <xc.h>\nvoid main(void) {\n    TRISB = 0xFF;\n    TRISD = 0x00;\n    TRISC = 0x00;\n    while(1) {\n        switch(PORTB & 0x03) {\n            case 0: PORTD = 0x01; PORTC = seg(0); break;\n            case 1: PORTD = 0x07; PORTC = seg(1); break;\n            case 2: PORTD = 0x3F; PORTC = seg(2); break;\n            default: PORTD = 0xFF; PORTC = seg(3); break;\n        }\n    }\n}",
+  LCD_HELLO:
+    '// Affichage LCD avec printf\n#include <xc.h>\nvoid main(void) {\n    TRISD = 0x00;\n    while(1) {\n        unsigned char v = ADRESH;\n        PORTD = v;\n        printf("ADC=%d", v);\n    }\n}',
 };
 
 // ─── Helper: download a file then revoke the blob URL ─────────────────────────
@@ -112,7 +116,7 @@ function App() {
   const [logs, setLogs] = useState([
     {
       type: "info",
-      text: "IDE Initialisé. v3.0",
+      text: "IDE Initialisé. v4.0",
       time: new Date().toLocaleTimeString(),
     },
   ]);
@@ -131,6 +135,16 @@ function App() {
   const [currentLine, setCurrentLine] = useState(0);
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [stepCount, setStepCount] = useState(0);
+  const [clock, setClock] = useState(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+
+  // Live clock
+  useEffect(() => {
+    const id = setInterval(() =>
+      setClock(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })),
+      1000
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const fileInputRef = useRef(null);
   const wsRef = useRef(null); // always-current socket reference
@@ -480,40 +494,52 @@ function App() {
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[8px] text-white/20 font-mono">
-                v3.0 · {simSpeed}ms/tick
+                v4.0 · {simSpeed}ms/tick
               </span>
               {isSimulating && (
                 <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 rounded-full border border-green-500/20">
                   <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-[8px] text-green-400 font-black uppercase">
-                    Running
+                    {Math.round(1000 / simSpeed)} Hz
                   </span>
                 </div>
               )}
               {stepCount > 0 && (
-                <span className="text-[8px] font-mono text-white/20 tabular-nums">
+                <span className="text-[8px] font-mono text-indigo-400/50 tabular-nums">
                   #{stepCount.toLocaleString()}
                 </span>
               )}
             </div>
+          </div>
+          {/* Live clock */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-white/3 rounded-lg border border-white/5">
+            <span className="text-[9px] font-mono text-white/20 tabular-nums tracking-wide">{clock}</span>
           </div>
 
           <div className="w-px h-8 bg-white/5 mx-1" />
 
           {/* Snippet picker */}
           <select
-            onChange={(e) => loadExample(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-black tracking-widest text-indigo-400 uppercase outline-none hover:bg-white/10 transition-all cursor-pointer"
+            onChange={(e) => { loadExample(e.target.value); e.target.value = ""; }}
+            className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-black tracking-widest text-indigo-400 uppercase outline-none hover:bg-white/10 transition-all cursor-pointer max-w-[160px]"
           >
             <option value="">📦 Exemples</option>
-            <option value="MIROIR">Miroir (PORTB→PORTD)</option>
-            <option value="CHENILLARD">Chenillard</option>
-            <option value="ADC_LCD">ADC → LCD</option>
-            <option value="COUNTER">Compteur 7-seg</option>
-            <option value="COMPOUND">Opérateurs += |= …</option>
-            <option value="IF_ELSE">If / else-if / else</option>
-            <option value="SWITCH">Switch / case</option>
-            <option value="EMPTY">Nouveau projet</option>
+            <optgroup label="── I/O Basiques">
+              <option value="MIROIR">Miroir PORTB→PORTD</option>
+              <option value="CHENILLARD">Chenillard</option>
+              <option value="COMPOUND">Opérateurs +=, |=…</option>
+            </optgroup>
+            <optgroup label="── Afficheurs">
+              <option value="SEG_COMPTEUR">7-Seg compteur 0-9</option>
+              <option value="SEG_BOUTON">7-Seg + bouton RA0</option>
+              <option value="LCD_HELLO">LCD printf</option>
+              <option value="ADC_LCD">ADC → LCD + LEDs</option>
+            </optgroup>
+            <optgroup label="── Logique">
+              <option value="IF_ELSE">If / else-if / else</option>
+              <option value="SWITCH">Switch / case</option>
+            </optgroup>
+            <option value="EMPTY">── Nouveau projet</option>
           </select>
 
           {/* Code tools */}

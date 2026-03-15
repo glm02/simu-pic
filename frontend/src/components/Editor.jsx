@@ -1,7 +1,37 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 
-const CodeEditor = ({ code, onChange, disabled }) => {
+const CodeEditor = ({ code, onChange, disabled, readOnly = false, currentLine = 0 }) => {
+  const editorRef = useRef(null);
+  const decorationsRef = useRef([]);
+
+  const handleEditorDidMount = (editor, monaco) => {
+    editorRef.current = editor;
+  };
+
+  useEffect(() => {
+    if (editorRef.current && currentLine > 0) {
+      const monaco = window.monaco;
+      if (!monaco) return;
+
+      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, [
+        {
+          range: new monaco.Range(currentLine, 1, currentLine, 1),
+          options: {
+            isWholeLine: true,
+            className: 'bg-yellow-500/20',
+            glyphMarginClassName: 'bg-yellow-500/50',
+            marginClassName: 'bg-yellow-500/10'
+          }
+        }
+      ]);
+      
+      editorRef.current.revealLineInCenterIfOutsideViewport(currentLine);
+    } else if (editorRef.current && currentLine === 0) {
+       decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, []);
+    }
+  }, [currentLine]);
+
   const handleEditorWillMount = (monaco) => {
     // Register completion provider for C/C++ in the simulator
     monaco.languages.registerCompletionItemProvider('cpp', {
@@ -50,6 +80,9 @@ const CodeEditor = ({ code, onChange, disabled }) => {
         <div className="flex items-center space-x-2">
             <div className="w-2 h-2 rounded-full bg-blue-500/50"></div>
             <span>main.c</span>
+            {readOnly && (
+              <span className="ml-2 px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded text-[8px] uppercase tracking-tighter">Lecture Seule</span>
+            )}
         </div>
       </div>
       <Editor
@@ -59,8 +92,10 @@ const CodeEditor = ({ code, onChange, disabled }) => {
         value={code}
         onChange={onChange}
         beforeMount={handleEditorWillMount}
+        onMount={handleEditorDidMount}
+        loading={<div className="monaco-loading">CHARGEMENT DE L'ÉDITEUR…</div>}
         options={{
-          readOnly: disabled,
+          readOnly: disabled || readOnly,
           minimap: { enabled: false },
           fontSize: 14,
           lineNumbers: 'on',
